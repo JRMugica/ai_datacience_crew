@@ -6,9 +6,9 @@ from src.utils.prepare_environment import set_api_keys
 
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "data", "input")
 
-def crear_agentes_crewai():
+def create_agents_crewai():
     """
-    Crea y registra los agentes en CrewAI.
+    CrewAI.
     """
     set_api_keys()
 
@@ -36,7 +36,7 @@ def crear_agentes_crewai():
 
     return agent
 
-def procesar_solicitud_con_langchain(agent, mensaje):
+def process_message(agent, mensaje):
     """
     Procesa el mensaje del usuario y determina qué agente de CrewAI debe ejecutar.
     """

@@ -1,12 +1,12 @@
 import streamlit as st
 import os
 import glob
-from src.agents import procesar_solicitud_con_langchain, crear_agentes_crewai
+from src.agents import process_message, create_agents_crewai
 
-agent = crear_agentes_crewai()
+agent = create_agents_crewai()
 st.title("Public OpenAI chatbot - non sensitive data usage")
 
-# Crear el directorio para guardar archivos si no existe
+# Upload logic
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "data", "input")
 if os.path.exists(UPLOAD_FOLDER):
     for f in glob.glob(f'{UPLOAD_FOLDER}/*'):
@@ -14,10 +14,7 @@ if os.path.exists(UPLOAD_FOLDER):
 else:
      os.makedirs(UPLOAD_FOLDER)
 
-# Configuración del diseño de la página
-col1, col2 = st.columns([1, 2])  # Ventana izquierda más pequeña que la derecha
-
-# Ventana izquierda: añadir datos
+col1, col2 = st.columns([1, 2])
 with col1:
     st.header("File Upload")
     uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
@@ -48,7 +45,7 @@ with col2:
             st.write(prompt)
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                answer = procesar_solicitud_con_langchain(agent, prompt)
+                answer = process_message(agent, prompt)
                 st.write(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
 

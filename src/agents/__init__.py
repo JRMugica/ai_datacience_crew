@@ -1,1 +1,1 @@
-from .agents import procesar_solicitud_con_langchain, crear_agentes_crewai
+from .agents import process_message, create_agents_crewai
