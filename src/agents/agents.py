@@ -2,9 +2,10 @@ import crewai
 import crewai_tools
 import os
 import glob
-from src.utils.prepare_environment import set_api_keys
+from src.utils.prepare_environment import set_api_keys, read_config
 
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "data", "input")
+config = read_config()
+UPLOAD_FOLDER = os.path.join(os.getcwd(), config['parameters']['UPLOAD_FOLDER'])
 
 def create_agents_crewai():
     """
@@ -19,11 +20,13 @@ def create_agents_crewai():
         api_base=os.environ['OPENAI_API_BASE']
     )
 
+    # Set of tools
     Global = [crewai_tools.DallETool()]
     FileRead = [crewai_tools.FileReadTool(f) for f in glob.glob(UPLOAD_FOLDER+'/*.txt')]
     TXTSearch = [crewai_tools.TXTSearchTool(f) for f in glob.glob(UPLOAD_FOLDER + '/*.txt')]
     PDFSearch = [crewai_tools.PDFSearchTool(f) for f in glob.glob(UPLOAD_FOLDER + '/*.pdf')]
-    tools = Global+FileRead+TXTSearch+PDFSearch
+    CSVSearch = [crewai_tools.CSVSearchTool(csv=f) for f in glob.glob(UPLOAD_FOLDER + '/*.csv')]
+    tools = Global+FileRead+TXTSearch+PDFSearch+CSVSearch
 
     agent = crewai.Agent(
         role='Personal Assistant',

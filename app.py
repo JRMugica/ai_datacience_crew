@@ -2,17 +2,14 @@ import streamlit as st
 import os
 import glob
 from src.agents import process_message, create_agents_crewai
+from src.utils import clean_input_files, read_config, excel_to_csv
 
-agent = create_agents_crewai()
+# Prepare setup
+config = read_config()
+UPLOAD_FOLDER = os.path.join(os.getcwd(), config['parameters']['UPLOAD_FOLDER'])
+clean_input_files(config)
+
 st.title("Public OpenAI chatbot - non sensitive data usage")
-
-# Upload logic
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "data", "input")
-if os.path.exists(UPLOAD_FOLDER):
-    for f in glob.glob(f'{UPLOAD_FOLDER}/*'):
-        os.remove(f)
-else:
-     os.makedirs(UPLOAD_FOLDER)
 
 col1, col2 = st.columns([1, 2])
 with col1:
@@ -27,9 +24,11 @@ with col1:
             st.success(f"File saved at {save_path}")
             st.write(f"**Name:** {uploaded_file.name}")
             #st.write(f"**Size:** {len(uploaded_file.getvalue())} bytes")
+        excel_to_csv(config)
     else:
         st.info("No file updated yet.")
 
+agent = create_agents_crewai()
 with col2:
     st.header("ChatBot")
 
