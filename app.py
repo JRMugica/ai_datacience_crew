@@ -1,13 +1,11 @@
 import streamlit as st
 import os
-import glob
-from src.agents import process_message, create_agents_crewai
+from src.agents import  create_agents_crewai
 from src.utils import clean_input_files, read_config, excel_to_csv
 
 # Prepare setup
 config = read_config()
 UPLOAD_FOLDER = os.path.join(os.getcwd(), config['parameters']['UPLOAD_FOLDER'])
-clean_input_files(config)
 
 st.title("Public OpenAI chatbot - non sensitive data usage")
 
@@ -16,6 +14,8 @@ with col1:
     st.header("File Upload")
     uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 
+    #if uploaded_files is None:
+    clean_input_files(config)
     if uploaded_files is not None:
         for uploaded_file in uploaded_files:
             save_path = os.path.join(UPLOAD_FOLDER, uploaded_file.name)
@@ -28,7 +28,7 @@ with col1:
     else:
         st.info("No file updated yet.")
 
-agent = create_agents_crewai()
+crew = create_agents_crewai()
 with col2:
     st.header("ChatBot")
 
@@ -44,7 +44,14 @@ with col2:
             st.write(prompt)
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                answer = process_message(agent, prompt)
+                inputs = {
+                    **{'message':prompt,}
+                }
+                answer = crew.kickoff(inputs=inputs).raw
+                if ("import" in answer) & ('plotly' in answer):
+                    code = answer.replace('```','').replace('python\n','')
+                    exec(code)
+                    st.plotly_chart(fig)
                 st.write(answer)
         st.session_state.messages.append({"role": "assistant", "content": answer})
 

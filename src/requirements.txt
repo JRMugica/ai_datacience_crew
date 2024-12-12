@@ -3,3 +3,5 @@ crewai
 crewai[tools]
 openai
 langchain-community
+psycopg2
+plotly
