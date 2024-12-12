@@ -3,6 +3,7 @@ import crewai_tools
 import os
 import glob
 import src.utils as utils
+import src.tools as tools
 from crewai.tasks.conditional_task import ConditionalTask
 
 config = utils.read_config()
@@ -20,14 +21,6 @@ def create_agents_crewai():
         api_key=os.environ['OPENAI_API_KEY'],
         api_base=os.environ['OPENAI_API_BASE']
     )
-
-    # Set of tools
-    Global = [crewai_tools.DallETool()]
-    FileRead = [crewai_tools.FileReadTool(f) for f in glob.glob(UPLOAD_FOLDER+'/*.txt')]
-    TXTSearch = [crewai_tools.TXTSearchTool(f) for f in glob.glob(UPLOAD_FOLDER + '/*.txt')]
-    PDFSearch = [crewai_tools.PDFSearchTool(f) for f in glob.glob(UPLOAD_FOLDER + '/*.pdf')]
-    CSVSearch = [crewai_tools.CSVSearchTool(csv=f) for f in glob.glob(UPLOAD_FOLDER + '/*.csv')]
-    tools = Global+FileRead+TXTSearch+PDFSearch+CSVSearch
 
     assistant_agent = crewai.Agent(
         role="Assistant Agent",
@@ -61,7 +54,7 @@ def create_agents_crewai():
                 Use the `execute_sql` to execute queries against the database.
             """,
             llm=llm,
-            tools= utils.data_query_tools(),
+            tools= tools.data_query_tools(),
             allow_delegation=False,
         )
         extract_data_task = crewai.Task(
@@ -103,8 +96,7 @@ def create_agents_crewai():
             """,
             llm=llm,
             allow_delegation=False,
-            allow_code_execution=True,
-            #tools=[crewai_tools.FileWriterTool()]
+            allow_code_execution=True
         )
         plot_data_task = crewai.Task(
             description="""Check if plot is requested.
@@ -131,7 +123,6 @@ def create_agents_crewai():
             and coordinate execution across agents: {message}
             """,
         expected_output="proper answer to request",
-        #tools=[],
         agent=manager_agent
     )
     crew = crewai.Crew(
