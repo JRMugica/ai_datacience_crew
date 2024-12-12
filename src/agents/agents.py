@@ -96,7 +96,8 @@ def create_agents_crewai():
             """,
             llm=llm,
             allow_delegation=False,
-            allow_code_execution=True
+            allow_code_execution=True,
+            code_execution_mode="unsafe"
         )
         plot_data_task = crewai.Task(
             description="""Check if plot is requested.
