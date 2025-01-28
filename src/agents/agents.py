@@ -4,9 +4,7 @@ import os
 import src.utils as utils
 from src.agents.agents_data_science import create_data_science_agents
 
-config = utils.read_config()
-UPLOAD_FOLDER = os.path.join(os.getcwd(), config['parameters']['UPLOAD_FOLDER'])
-utils.set_api_keys()
+config = utils.get_config()
 
 def create_agents_crewai():
     """
@@ -34,7 +32,8 @@ def create_agents_crewai():
     )
     main_task = crewai.Task(
         description="""Give a proper answer to user message 
-            and coordinate execution across agents: {message}
+            and coordinate execution across agents: {user_message}.
+            Use the provided conversation history: {context}
             """,
         expected_output="proper answer to request",
         agent=manager_agent
@@ -43,7 +42,7 @@ def create_agents_crewai():
         agents=agents,
         manager_agent=manager_agent,
         tasks=[main_task]+tasks,
-        #process=crewai.Process.sequential,
+        memory=True,
         verbose=True
     )
 

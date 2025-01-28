@@ -1,23 +1,20 @@
-import os
 import crewai_tools
 import crewai
 import src.tools as tools
 import src.utils as utils
 from langchain_community.utilities.sql_database import SQLDatabase
-from pathlib import Path
 
-config = utils.read_config()
-UPLOAD_FOLDER = os.path.join(os.getcwd(), config['parameters']['UPLOAD_FOLDER'])
+
+config = utils.get_config()
+data_folder = config['parameters']['UPLOAD_FOLDER']
 
 def create_data_science_agents(llm):
 
-    uri = f'{UPLOAD_FOLDER}/data_base.db'
-    db = SQLDatabase.from_uri(f"sqlite:///{Path(uri).as_posix()}")
-
-    if not utils.database_creation(UPLOAD_FOLDER):
-        return [], []
-    else:
+    db = utils.database_creation(data_folder)
+    if isinstance(db, SQLDatabase):
         db_tools = tools.data_query_tools(db)
+    else:
+        return [], []
 
     query_agent  = crewai.Agent(
         role="Data Analyst",
@@ -29,14 +26,14 @@ def create_data_science_agents(llm):
             2. Use `tables_schema` to understand the metadata for the tables.
             3. Use `check_sql` to check your queries for correctness.
             4. Use `execute_sql` to execute queries against the database.
-            5. Format the obtained data as csv and use 'FileWriterTool' to store the results at file '{UPLOAD_FOLDER}/results.csv'              
+            5. Format the obtained data as csv and use 'FileWriterTool' to store the results at file '{data_folder}/results.csv'              
         """,
         llm=llm,
         tools= db_tools +[crewai_tools.FileWriterTool()],
         allow_delegation=False
     )
     extract_data_task = crewai.Task(
-        description="Extract data that is required for the query {message}.",
+        description="Extract data that is required for the query {user_message}.",
         expected_output="Database result for the query in csv format",
         agent=query_agent,
     )
@@ -49,12 +46,12 @@ def create_data_science_agents(llm):
             1. Create python code script that: 
                 1.1 Reads in pandas the data
                 1.2 Creates the python code requested: it can be machine learning for forecasting, or for data preparation, or any other
-                    When data is time series, use arima forecast approach finding best parameters using last periods out of time validation
-                    When data is tabular, use Random Forest approach with 5-fold hyperparameter tuning
+                    When forcasting is on time series data, use arima forecast approach finding best parameters using last periods out of time validation
+                    When forcasting in on tabular data, use Random Forest approach with 5-fold hyperparameter tuning
                 1.3 Delivers expected data output
             2. Execute the python code.
-            3. Format the obtained data as csv and use 'FileWriterTool' to store the results at file '{UPLOAD_FOLDER}/results_python.csv'    
-            4. As backup write the python script used using 'FileWriterTool' to store the script at file '{UPLOAD_FOLDER}/results_python_script.py'
+            3. Format the obtained data as csv and use 'FileWriterTool' to store the results at file '{data_folder}/results_python.csv'    
+            4. As backup write the python script used using 'FileWriterTool' to store the script at file '{data_folder}/results_python_script.py'
             5. Show the final data to the user           
         """,
         llm=llm,
@@ -64,7 +61,7 @@ def create_data_science_agents(llm):
         code_execution_mode = 'unsafe'
     )
     python_task = crewai.Task(
-        description="Understand if python is needed to acomplish user request: {message}.",
+        description="Understand if python is needed to acomplish user request: {user_message}.",
         expected_output="Python script execution and final data result shared to the user",
         agent=python_agent,
     )

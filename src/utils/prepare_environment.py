@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 from omegaconf import OmegaConf
+import src.utils as utils
 
-def read_config(base_dir='config/base', local_dir='config/local'):
+def get_config(base_dir='config/base', local_dir='config/local', clean_memory=False):
     merged_configs = {}
 
     base_path = Path(os.getcwd()).joinpath(base_dir)
@@ -26,11 +27,26 @@ def read_config(base_dir='config/base', local_dir='config/local'):
 
             merged_configs[filename.split('.')[0]] = merged_conf
 
+    merged_configs['UPLOAD_FOLDER'] = Path(os.path.join(os.getcwd(), merged_configs['parameters']['UPLOAD_FOLDER']))
+    merged_configs['MEMORY_FOLDER'] = Path(os.path.join(os.getcwd(), merged_configs['parameters']['MEMORY_FOLDER']))
+
+    if clean_memory:
+        utils.remove_files(merged_configs['MEMORY_FOLDER'])
+    merged_configs['memory_config'] = {
+        "vector_store": {
+            "provider": "chroma",
+            "config": {
+                "collection_name": "chatbot_memory",
+                "path": f"{merged_configs['MEMORY_FOLDER']}/chroma_db_memory",
+            },
+        },
+    }
+
     return merged_configs
 
 def set_api_keys():
 
-    config = read_config()
+    config = get_config()
     for k, v in config['credentials']['API_KEYS'].items():
         print(f"Setting up environment variable: {k}")
         os.environ[k] = v
