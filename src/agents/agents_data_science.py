@@ -64,6 +64,7 @@ def create_data_science_agents(llm):
         description="Understand if python is needed to acomplish user request: {user_message}.",
         expected_output="Python script execution and final data result shared to the user",
         agent=python_agent,
+        context=extract_data_task
     )
 
     data_analyst_agents = [query_agent, python_agent]
