@@ -1,10 +1,10 @@
 import streamlit as st
 import os
 from src.agents import  create_agents_crewai
-from src.utils import clean_input_files, read_config, excel_to_csv
+import src.utils as utils
 
 # Prepare setup
-config = read_config()
+config = utils.read_config()
 UPLOAD_FOLDER = os.path.join(os.getcwd(), config['parameters']['UPLOAD_FOLDER'])
 
 st.title("Public OpenAI chatbot - non sensitive data usage")
@@ -14,9 +14,10 @@ with col1:
     st.header("File Upload")
     uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
 
-    #if uploaded_files is None:
-    clean_input_files(config)
-    if uploaded_files is not None:
+    if uploaded_files == []:
+        utils.remove_files(UPLOAD_FOLDER)
+        st.info("No file updated yet.")
+    else:
         for uploaded_file in uploaded_files:
             save_path = os.path.join(UPLOAD_FOLDER, uploaded_file.name)
             with open(save_path, "wb") as f:
@@ -24,9 +25,6 @@ with col1:
             st.success(f"File saved at {save_path}")
             st.write(f"**Name:** {uploaded_file.name}")
             #st.write(f"**Size:** {len(uploaded_file.getvalue())} bytes")
-        excel_to_csv(config)
-    else:
-        st.info("No file updated yet.")
 
 crew = create_agents_crewai()
 with col2:
@@ -34,9 +32,14 @@ with col2:
 
     if "messages" not in st.session_state.keys():
         st.session_state.messages = [{"role": "assistant", "content": "How may I help you?"}]
+    # Display chat messages for the current thread
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+        if message["role"] == "user":
+            with st.chat_message("user"):
+                st.markdown(message["content"])
+        elif message["role"] == "agent":
+            with st.chat_message("assistant"):
+                st.markdown(message["content"])
 
     if prompt := st.chat_input("Your message"):
         st.session_state.messages.append({"role": "user", "content": prompt})
