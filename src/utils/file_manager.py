@@ -7,8 +7,11 @@ from pathlib import Path
 from langchain_community.utilities.sql_database import SQLDatabase
 
 def remove_files(folder):
-    shutil.rmtree(folder)
-    os.makedirs(folder)
+    if os.path.exists(folder):
+        shutil.rmtree(folder)
+        os.makedirs(folder)
+    else:
+        os.makedirs(folder)
 
 def database_creation(folder):
 

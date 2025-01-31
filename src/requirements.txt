@@ -5,3 +5,4 @@ openai
 langchain-community
 psycopg2
 plotly
+mem0ai==0.1.34

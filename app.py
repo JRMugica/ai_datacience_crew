@@ -4,7 +4,7 @@ import streamlit as st
 from src.agents import  create_agents_crewai
 import src.utils as utils
 
-
+st.set_page_config(layout="wide")
 st.title("Public OpenAI chatbot - non sensitive data usage")
 
 if "started" not in st.session_state:
@@ -37,7 +37,10 @@ with col2:
                 st.markdown(message["content"])
         elif message["role"] == "assistant":
             with st.chat_message("assistant"):
-                st.markdown(message["content"])
+                if ("import" in message["content"]) & ('plotly' in message["content"]):
+                    st.plotly_chart(fig)
+                else:
+                    st.markdown(message["content"])
 
     if user_input := st.chat_input("Your message"):
         st.session_state.messages.append({"role": "user", "content": user_input})
@@ -53,10 +56,14 @@ with col2:
             }
             answer = create_agents_crewai().kickoff(inputs=inputs).raw
         with st.chat_message("assistant"):
-            if ("import" in answer) & ('plotly' in answer):
-                code = answer.replace('```','').replace('python\n','')
-                exec(code)
-                st.plotly_chart(fig)
+            if os.path.exists('data/input/results_python_script.py'):
+                with open("data/input/results_python_script.py", 'r') as f:
+                    code = f.read()#.replace('\n', '')
+                if ("import" in code) & ('plotly' in code):
+                    code = code.replace('```','').replace('python\n','')
+                    exec(code)
+                    st.plotly_chart(fig)
+                    os.remove("data/input/results_python_script.py")
             st.write(answer)
             st.session_state.memory.add(f"Assistant: {answer}", user_id="assistant")
             st.session_state.messages.append({"role": "assistant", "content": answer})
