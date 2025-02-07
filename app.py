@@ -1,21 +1,29 @@
 import os
-from mem0 import Memory, MemoryClient
 import streamlit as st
 from src.agents import  create_agents_crewai
 import src.utils as utils
 
 st.set_page_config(layout="wide")
-st.title("Public OpenAI chatbot - non sensitive data usage")
+st.title("Chatbot Assistant - non sensitive data usage")
+st.subheader("Only share sensitive data if local GPU usage")
 
-if "started" not in st.session_state:
-    st.session_state.config = utils.get_config(clean_memory=True)
-    utils.set_api_keys()
-    st.session_state.memory = Memory.from_config(st.session_state.config['memory_config'])  # uses Open AI
-    st.session_state.messages = []
+if not st.session_state.get("started", False):
     st.session_state.started = True
+    st.session_state.config = utils.get_config(clean_memory=True)
+    utils.set_api_keys(st.session_state.config)
+    st.session_state.memory = utils.get_memory(st.session_state.config, clean_memory=True)
+    st.session_state.messages = []
 
 col1, col2 = st.columns([1, 2])
 with col1:
+    st.header("Select model to use")
+    model_choice = 'External OpenAI API (data sensitive)'
+    gpus = utils.get_available_gpus()
+    gpu_choice = st.selectbox("Choose a model:", [model_choice] + gpus)
+    if 'GPU' in gpu_choice:
+        models = utils.get_ollama_models()
+        model_choice = st.selectbox("Select a local model:", models)
+
     st.header("File Upload")
     uploaded_files = st.file_uploader("Choose files", accept_multiple_files=True)
     if uploaded_files == []:
@@ -30,15 +38,18 @@ with col1:
             st.write(f"**Name:** {uploaded_file.name}")
 
 with col2:
-    st.header("ChatBot")
+    st.header(f"ChatBot: {model_choice}")
     for message in st.session_state.messages:
         if message["role"] == "user":
             with st.chat_message("user"):
                 st.markdown(message["content"])
         elif message["role"] == "assistant":
             with st.chat_message("assistant"):
-                if ("import" in message["content"]) & ('plotly' in message["content"]):
-                    st.plotly_chart(fig)
+                if ("import" in message["content"]) & ('plotly' in message["content"]) & ('fig' in message["content"]):
+                    try:
+                        st.plotly_chart(fig)
+                    except:
+                        st.markdown(message["content"])
                 else:
                     st.markdown(message["content"])
 
@@ -54,12 +65,12 @@ with col2:
                     "user_message": f"{user_input}",
                     "context": f"{context}",
             }
-            answer = create_agents_crewai().kickoff(inputs=inputs).raw
+            answer = create_agents_crewai(model_choice).kickoff(inputs=inputs).raw
         with st.chat_message("assistant"):
             if os.path.exists('data/input/results_python_script.py'):
                 with open("data/input/results_python_script.py", 'r') as f:
                     code = f.read()#.replace('\n', '')
-                if ("import" in code) & ('plotly' in code):
+                if ("import" in code) & ('plotly' in code) & ('fig' in code):
                     code = code.replace('```','').replace('python\n','')
                     exec(code)
                     st.plotly_chart(fig)

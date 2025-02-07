@@ -6,3 +6,8 @@ langchain-community
 psycopg2
 plotly
 mem0ai==0.1.34
+vllm
+resource
+tokenizers==0.20.3
+transformers==4.45.2
+chromadb==0.5.23

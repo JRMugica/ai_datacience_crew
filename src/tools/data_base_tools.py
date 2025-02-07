@@ -11,7 +11,7 @@ from langchain_community.tools.sql_database.tool import (
 from langchain_openai import ChatOpenAI
 
 
-def data_query_tools(db):
+def data_query_tools(db, llm):
 
     @tool("list_tables")
     def list_tables() -> str:
@@ -33,12 +33,6 @@ def data_query_tools(db):
         """Execute a SQL query against the database. Returns the result"""
         return QuerySQLDataBaseTool(db=db).invoke(sql_query)
 
-    llm = crewai.LLM(
-        model="gpt-4o-mini",  # "gpt-4o",
-        api_key=os.environ['OPENAI_API_KEY'],
-        api_base=os.environ['OPENAI_API_BASE']
-    )
-    llm = ChatOpenAI(model="gpt-4o-mini")
     @tool("check_sql")
     def check_sql(sql_query: str) -> str:
         """

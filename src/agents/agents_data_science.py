@@ -12,13 +12,13 @@ def create_data_science_agents(llm):
 
     db = utils.database_creation(data_folder)
     if isinstance(db, SQLDatabase):
-        db_tools = tools.data_query_tools(db)
+        db_tools = tools.data_query_tools(db, llm)
     else:
         return [], []
 
     query_agent  = crewai.Agent(
         role="Data Analyst",
-        goal="Construct and execute SQL queries based on a request",
+        goal="Given data request, explore sql database, create and execute SQL queries based on a request",
         backstory=f"""
             You are an experienced database engineer who is master at creating efficient and complex SQL queries.
             You have a deep understanding of how different databases work and how to optimize queries.      
@@ -37,10 +37,10 @@ def create_data_science_agents(llm):
         """ +
         f"""
             5. Format the obtained data as csv and use 'FileWriterTool' to store the results at file '{data_folder}/results.csv'
-            6. Pass the final data to the next agent  
+            6. Give the final data to the next agent  
         """,
         expected_output="Database result for the query in csv format",
-        agent=query_agent,
+        agent=query_agent
     )
 
     python_agent  = crewai.Agent(
@@ -64,7 +64,7 @@ def create_data_science_agents(llm):
                 1.2 Creates the python code as needed: for example, it can be machine learning for forecasting, or for data preparation, or any other
                     When forcasting is on time series data, use arima forecast approach finding best parameters using last periods out of time validation
                     When forcasting in on tabular data, use Random Forest approach with 5-fold hyperparameter tuning
-                    When asking for a plot, deliver the proper Plotly code, with no execution. Store the plot at fig variable, and do not run fig.show()
+                    When asking for a plot, deliver the proper Plotly code, with no execution. Store the plot at fig variable. Never code 'fig.show()'
                 1.3 Delivers expected output
             2. Execute the python code if needed. If plot is requested, deliver the plotly code with no execution.
             3. Format the obtained data as csv and use 'FileWriterTool' to store the results at file '{data_folder}/results_python.csv'    
